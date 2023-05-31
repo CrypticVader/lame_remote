@@ -24,3 +24,8 @@ doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
 
+android/.idea/
+.idea/
+
+.idea/workspace.xml
+android/.idea/workspace.xml
