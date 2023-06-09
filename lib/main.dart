@@ -1,125 +1,218 @@
+import 'dart:ui';
+
+import 'package:LameRemote/rover_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.black.withOpacity(0.002),
+    ),
+  );
+
+  runApp(const LameRemote());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LameRemote extends StatelessWidget {
+  const LameRemote({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Lame Remote',
+      themeAnimationCurve: Curves.ease,
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        fontFamily: 'RobotoMono',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.lightGreen,
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
+        splashFactory: InkSparkle.splashFactory,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      darkTheme: ThemeData(
+        fontFamily: 'RobotoMono',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.lightGreen,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+        splashFactory: InkSparkle.splashFactory,
+      ),
+      home: const HomePage(title: 'Lame Remote'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+class HomePage extends StatefulWidget {
+  const HomePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomePageState extends State<HomePage> {
+  bool isLoading = false;
 
-  void _incrementCounter() {
+  @override
+  void initState() {
+    SystemChrome.setPreferredOrientations([]);
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      SystemChrome.setPreferredOrientations([]);
     });
+    super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          SvgPicture.asset(
+            'assets/images/home_bg.svg',
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).colorScheme.onPrimaryContainer.withAlpha(150),
+              BlendMode.srcIn,
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const SizedBox(
+                  height: 70,
+                ),
+                Text(
+                  'Lame',
+                  style: TextStyle(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondary
+                          .withAlpha(200),
+                      fontSize: 66,
+                      height: 0.2,
+                      fontVariations: const <FontVariation>[
+                        FontVariation('wght', 300)
+                      ]),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(32.0, 0, 0, 0),
+                  child: Text(
+                    'Remote',
+                    style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withAlpha(230),
+                        fontSize: 64,
+                        height: 0.85,
+                        fontVariations: const <FontVariation>[
+                          FontVariation('wght', 700)
+                        ]),
+                  ),
+                ),
+                const Spacer(
+                  flex: 1,
+                ),
+                const Text(
+                  'Enter the network details of the rover to connect.',
+                ),
+                const SizedBox(
+                  height: 16.0,
+                ),
+                const TextField(
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.zero,
+                    prefixIcon: Icon(Icons.numbers),
+                    hintText: 'Enter the IP Address',
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(4.0),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 12.0,
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: !isLoading
+                        ? FilledButton.icon(
+                            key: ValueKey<bool>(isLoading),
+                            onPressed: () async {
+                              setState(() {
+                                isLoading = true;
+                              });
+                              await Future.delayed(const Duration(seconds: 2));
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return const RoverView();
+                                  },
+                                ),
+                              );
+                              setState(() {
+                                isLoading = false;
+                              });
+                            },
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(150, 36),
+                            ),
+                            icon: const Icon(
+                              Icons.terminal_outlined,
+                            ),
+                            label: const Text(
+                              'Connect',
+                              style: TextStyle(
+                                  fontSize: 17.0,
+                                  fontWeight: FontWeight.w400,
+                                  fontVariations: <FontVariation>[
+                                    FontVariation('wght', 400)
+                                  ]),
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(32.0),
+                            ),
+                            child: CircularProgressIndicator(
+                              key: ValueKey<bool>(isLoading),
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 48,
+                ),
+              ],
             ),
-          ],
-        ),
+          )
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
