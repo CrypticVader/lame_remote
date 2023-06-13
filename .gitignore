@@ -29,3 +29,4 @@ android/.idea/
 android/.gradle/
 android/.gradle/7.5/fileHashes/fileHashes.lock
 android/.gradle/7.5/checksums/checksums.lock
+android/local.properties

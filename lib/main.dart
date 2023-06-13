@@ -1,9 +1,11 @@
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:LameRemote/rover_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:ssh2/ssh2.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -117,15 +119,14 @@ class _HomePageState extends State<HomePage> {
                   child: Text(
                     'Remote',
                     style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withAlpha(230),
-                        fontSize: 64,
-                        height: 0.85,
-                        fontVariations: const <FontVariation>[
-                          FontVariation('wght', 700)
-                        ]),
+                      color:
+                          Theme.of(context).colorScheme.primary.withAlpha(230),
+                      fontSize: 64,
+                      height: 0.85,
+                      fontVariations: const <FontVariation>[
+                        FontVariation('wght', 700)
+                      ],
+                    ),
                   ),
                 ),
                 const Spacer(
@@ -164,11 +165,24 @@ class _HomePageState extends State<HomePage> {
                               setState(() {
                                 isLoading = true;
                               });
-                              await Future.delayed(const Duration(seconds: 2));
+                              final SSHClient client = SSHClient(
+                                host: '192.168.8.69',
+                                port: 22,
+                                username: 'pi',
+                                passwordOrKey: 'raspberry',
+                              );
+                              final connectionStatus = await client.connect();
+                              log(connectionStatus ?? 'ERROR!!');
+
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) {
-                                    return const RoverView();
+                                    return RoverView(
+                                      client: client,
+                                      disconnectClient: () async {
+                                        await client.disconnect();
+                                      },
+                                    );
                                   },
                                 ),
                               );

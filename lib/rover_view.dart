@@ -1,14 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ssh2/ssh2.dart';
 
 class RoverView extends StatefulWidget {
-  const RoverView({super.key});
+  const RoverView({
+    super.key,
+    required this.disconnectClient,
+    required this.client,
+  });
+
+  final Function() disconnectClient;
+  final SSHClient client;
 
   @override
   State<RoverView> createState() => _RoverViewState();
 }
 
 class _RoverViewState extends State<RoverView> {
+  String _assetPath = 'assets/images/imgTest_1.jpg';
+
+  Future<void> toggleAsset() async {
+    if (_assetPath == 'assets/images/imgTest_1.jpg') {
+      setState(() {
+        _assetPath = 'assets/images/imgTest_2.png';
+      });
+    } else {
+      setState(() {
+        _assetPath = 'assets/images/imgTest_1.jpg';
+      });
+    }
+    await Future.delayed(const Duration(milliseconds: 500), toggleAsset);
+  }
+
   @override
   void initState() {
     // set initial orientation to landscape
@@ -23,6 +46,7 @@ class _RoverViewState extends State<RoverView> {
       overlays: [],
     );
     super.initState();
+    toggleAsset();
   }
 
   @override
@@ -48,7 +72,8 @@ class _RoverViewState extends State<RoverView> {
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(100, 42),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
+                      await widget.disconnectClient();
                       Navigator.of(context).pop(true);
                     },
                     child: const Text('Yes'),
@@ -82,107 +107,104 @@ class _RoverViewState extends State<RoverView> {
       child: Scaffold(
         body: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Stack(
-                children: [
-                  // Forward button
-                  Positioned(
-                    bottom: 120,
-                    right: 40,
-                    child: GestureDetector(
-                      onTapDown: (details) {
-                        HapticFeedback.vibrate();
-                      },
-                      onTapCancel: () {},
-                      child: IconButton.filled(
-                        onPressed: () {},
-                        style: IconButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          iconSize: 64,
-                        ),
-                        icon: const Icon(
-                          Icons.arrow_drop_up_rounded,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Backward button
-                  Positioned(
-                    bottom: 40,
-                    right: 40,
-                    child: GestureDetector(
-                      onTapDown: (details) {
-                        HapticFeedback.vibrate();
-                      },
-                      onTapCancel: () {},
-                      child: IconButton.filled(
-                        onPressed: () {},
-                        style: IconButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          iconSize: 64,
-                        ),
-                        icon: const Icon(
-                          Icons.arrow_drop_down_rounded,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Left button
-                  Positioned(
-                    left: 40,
-                    bottom: 80,
-                    child: GestureDetector(
-                      onTapDown: (details) {
-                        HapticFeedback.vibrate();
-                      },
-                      onTapCancel: () {},
-                      child: IconButton.filled(
-                        onPressed: () {},
-                        style: IconButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          iconSize: 64,
-                        ),
-                        icon: const Icon(
-                          Icons.arrow_left_rounded,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Right button
-                  Positioned(
-                    left: 140,
-                    bottom: 80,
-                    child: GestureDetector(
-                      onTapDown: (details) {
-                        HapticFeedback.vibrate();
-                      },
-                      onTapCancel: () {},
-                      child: IconButton.filled(
-                        onPressed: () {},
-                        style: IconButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          iconSize: 64,
-                        ),
-                        icon: const Icon(
-                          Icons.arrow_right_rounded,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            Center(
+              child: Image.asset(_assetPath),
             ),
-            Positioned(
-              top: MediaQuery.of(context).size.height / 2 - 150,
-              left: MediaQuery.of(context).size.width / 2 - 100,
-              child: Icon(
-                Icons.videocam_rounded,
-                size: 256,
-                color: Theme.of(context).colorScheme.onBackground,
+            Opacity(
+              opacity: 0.65,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Stack(
+                  children: [
+                    // Forward button
+                    Positioned(
+                      bottom: 120,
+                      right: 40,
+                      child: GestureDetector(
+                        onTapDown: (details) {
+                          HapticFeedback.vibrate();
+                        },
+                        onTapCancel: () {},
+                        child: IconButton.filled(
+                          onPressed: () {},
+                          style: IconButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            iconSize: 64,
+                          ),
+                          icon: const Icon(
+                            Icons.arrow_drop_up_rounded,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Backward button
+                    Positioned(
+                      bottom: 40,
+                      right: 40,
+                      child: GestureDetector(
+                        onTapDown: (details) {
+                          HapticFeedback.vibrate();
+                        },
+                        onTapCancel: () {},
+                        child: IconButton.filled(
+                          onPressed: () {},
+                          style: IconButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            iconSize: 64,
+                          ),
+                          icon: const Icon(
+                            Icons.arrow_drop_down_rounded,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Left button
+                    Positioned(
+                      left: 40,
+                      bottom: 80,
+                      child: GestureDetector(
+                        onTapDown: (details) {
+                          HapticFeedback.vibrate();
+                        },
+                        onTapCancel: () {},
+                        child: IconButton.filled(
+                          onPressed: () {},
+                          style: IconButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            iconSize: 64,
+                          ),
+                          icon: const Icon(
+                            Icons.arrow_left_rounded,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Right button
+                    Positioned(
+                      left: 140,
+                      bottom: 80,
+                      child: GestureDetector(
+                        onTapDown: (details) {
+                          HapticFeedback.vibrate();
+                        },
+                        onTapCancel: () {},
+                        child: IconButton.filled(
+                          onPressed: () {},
+                          style: IconButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            iconSize: 64,
+                          ),
+                          icon: const Icon(
+                            Icons.arrow_right_rounded,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
