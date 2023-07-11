@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 import 'package:lame_remote/application/ssh_bloc/ssh_bloc.dart';
 import 'package:lame_remote/infrastructure/rover_ssh_service.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class RoverView extends StatefulWidget {
   const RoverView({super.key});
@@ -13,6 +15,8 @@ class RoverView extends StatefulWidget {
 
 class _RoverViewState extends State<RoverView> {
   final String _assetPath = 'assets/images/imgTest_1.jpg';
+
+  late WebViewController controller;
 
   @override
   void initState() {
@@ -28,6 +32,24 @@ class _RoverViewState extends State<RoverView> {
       overlays: [],
     );
     super.initState();
+
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {},
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: (NavigationRequest request) {
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse('http://192.168.8.106:8000/stream.mjpg'));
   }
 
   @override
@@ -94,8 +116,15 @@ class _RoverViewState extends State<RoverView> {
           child: Scaffold(
             body: Stack(
               children: [
-                Center(
-                  child: Image.asset(_assetPath),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: LimitedBox(
+                    maxHeight: 640,
+                    maxWidth: 480,
+                    child: WebViewWidget(
+                      controller: controller,
+                    ),
+                  ),
                 ),
                 Opacity(
                   opacity: 0.65,

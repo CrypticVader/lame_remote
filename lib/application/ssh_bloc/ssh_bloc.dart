@@ -26,11 +26,11 @@ class SshBloc extends Bloc<SshEvent, SshState> {
             password: event.password,
           );
 
+          // Delay to wait for authentication
+          await Future.delayed(const Duration(seconds: 3));
+          await RoverSSHService().setupCamFeed();
           // If connected, emit connected state
           emit(const SshConnectedState());
-
-          await Future.delayed(const Duration(seconds: 3));
-          unawaited(RoverSSHService().startMovementListener());
         } on CouldNotConnectSshException {
           emit(const SshUninitializedState(
             exception:
@@ -46,7 +46,8 @@ class SshBloc extends Bloc<SshEvent, SshState> {
 
     // disconnect from host
     on<SshDisconnectEvent>(
-      (event, emit) {
+      (event, emit) async {
+        await RoverSSHService().closeCamService();
         RoverSSHService().closeConnection();
         emit(const SshUninitializedState());
       },
@@ -54,17 +55,26 @@ class SshBloc extends Bloc<SshEvent, SshState> {
 
     // When any movement button is pressed
     on<SshKeyPressEvent>(
-      (event, emit) {
+      (event, emit) async {
         log('Key press: ${event.key.toString()}');
-        RoverSSHService().startMovement(event.key);
+        switch (event.key) {
+          case MovementEvent.forward:
+            await RoverSSHService().goForward();
+          case MovementEvent.backward:
+            await RoverSSHService().goBackward();
+          case MovementEvent.left:
+            await RoverSSHService().goLeft();
+          case MovementEvent.right:
+            await RoverSSHService().goRight();
+        }
       },
     );
 
     // When any movement button is released
     on<SshKeyReleaseEvent>(
-      (event, emit) {
+      (event, emit) async {
         log('Key release: ${event.key.toString()}');
-        RoverSSHService().stopMovement(event.key);
+        await RoverSSHService().stopMoving();
       },
     );
   }

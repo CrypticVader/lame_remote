@@ -430,7 +430,7 @@ class _AuthViewState extends State<AuthView> {
                                   ? null
                                   : () {
                                       _hostFieldController.text =
-                                          '192.168.8.69';
+                                          '192.168.8.106';
                                       _portFieldController.text = '22';
                                       _usernameFieldController.text =
                                           'pi';
