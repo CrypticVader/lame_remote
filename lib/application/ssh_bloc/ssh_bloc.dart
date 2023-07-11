@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:lame_remote/infrastructure/rover_http_service.dart';
 import 'package:lame_remote/infrastructure/rover_ssh_service.dart';
 
 part 'ssh_event.dart';
@@ -26,9 +26,9 @@ class SshBloc extends Bloc<SshEvent, SshState> {
             password: event.password,
           );
 
-          // Delay to wait for authentication
+          await RoverSSHService().runCamScript();
+          // Delay to wait for script to start
           await Future.delayed(const Duration(seconds: 3));
-          await RoverSSHService().setupCamFeed();
           // If connected, emit connected state
           emit(const SshConnectedState());
         } on CouldNotConnectSshException {
@@ -47,7 +47,7 @@ class SshBloc extends Bloc<SshEvent, SshState> {
     // disconnect from host
     on<SshDisconnectEvent>(
       (event, emit) async {
-        await RoverSSHService().closeCamService();
+        await RoverSSHService().killCamScript();
         RoverSSHService().closeConnection();
         emit(const SshUninitializedState());
       },
@@ -59,13 +59,13 @@ class SshBloc extends Bloc<SshEvent, SshState> {
         log('Key press: ${event.key.toString()}');
         switch (event.key) {
           case MovementEvent.forward:
-            await RoverSSHService().goForward();
+            RoverSSHService().goForward();
           case MovementEvent.backward:
-            await RoverSSHService().goBackward();
+            RoverSSHService().goBackward();
           case MovementEvent.left:
-            await RoverSSHService().goLeft();
+            RoverSSHService().goLeft();
           case MovementEvent.right:
-            await RoverSSHService().goRight();
+            RoverSSHService().goRight();
         }
       },
     );
@@ -74,8 +74,24 @@ class SshBloc extends Bloc<SshEvent, SshState> {
     on<SshKeyReleaseEvent>(
       (event, emit) async {
         log('Key release: ${event.key.toString()}');
-        await RoverSSHService().stopMoving();
+        RoverSSHService().stopMoving();
       },
     );
+
+    // Used to run an arbitrary command on the host
+    on<SshRunCommandEvent>(
+      (event, emit) =>
+          RoverSSHService().runCommandOnHost(command: event.command),
+    );
+
+    on<SshKillProcessEvent>(
+      (event, emit) => RoverSSHService().killCurrentProcess(),
+    );
+  }
+
+  @override
+  void onTransition(Transition<SshEvent, SshState> transition) {
+    log(transition.toString());
+    super.onTransition(transition);
   }
 }

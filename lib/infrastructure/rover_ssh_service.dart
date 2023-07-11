@@ -13,6 +13,11 @@ class RoverSSHService {
   factory RoverSSHService() => _shared;
 
   SSHClient? _client;
+  SSHSession? _shell;
+  String? _hostAddress;
+
+  /// Returns the IP Address of the host device.
+  String? get hostAddress => _hostAddress;
 
   /// Sets up an SSH connection to the Rover's Raspberry Pi.
   ///
@@ -36,6 +41,8 @@ class RoverSSHService {
         onAuthenticated: () => log('SSH authenticated'),
       );
       _client = client;
+      _shell = await _client!.shell();
+      _hostAddress = host;
       // } on SocketException {
       //   throw CouldNotConnectSshException();
     } catch (e) {
@@ -43,28 +50,62 @@ class RoverSSHService {
     }
   }
 
+  void runCommandOnHost({required String command}) =>
+      _shell!.write(Uint8List.fromList(utf8.encode('$command\n')));
+
+  void killCurrentProcess() => _shell?.kill(SSHSignal.KILL);
+
   void closeConnection() {
+    _shell?.kill(SSHSignal.KILL);
     _client?.close;
     _client = null;
+    _shell = null;
+    _hostAddress = null;
   }
 
-  Future<void> goForward() async => await _client!.run('python car_forward.py');
+  /// Command the rover to move in forward direction.
+  void goForward() {
+    _shell?.kill(SSHSignal.KILL);
+    _shell!.write(Uint8List.fromList(utf8.encode('python car_forward.py\n')));
+  }
 
-  Future<void> goBackward() async =>
-      await _client!.run('python car_backward.py');
+  /// Command the rover to move in backward direction.
+  void goBackward() {
+    _shell?.kill(SSHSignal.KILL);
+    _shell!.write(Uint8List.fromList(utf8.encode('python car_back.py\n')));
+  }
 
-  Future<void> goRight() async => await _client!.run('python car_stop.py');
+  /// Command the rover to move in right direction.
+  void goRight() {
+    _shell?.kill(SSHSignal.KILL);
+    _shell!.write(Uint8List.fromList(utf8.encode('python car_right.py\n')));
+  }
 
-  Future<void> goLeft() async => await _client!.run('python car_stop.py');
+  /// Command the rover to move in left direction.
+  void goLeft() {
+    _shell?.kill(SSHSignal.KILL);
+    _shell!.write(Uint8List.fromList(utf8.encode('python car_left.py\n')));
+  }
 
-  Future<void> stopMoving() async => await _client!.run('python car_stop.py');
+  /// Command the rover to stop moving.
+  void stopMoving() {
+    _shell?.kill(SSHSignal.KILL);
 
-  Future<void> setupCamFeed() async {
+    _shell!.write(Uint8List.fromList(utf8.encode('pkill -f car_forward.py')));
+    _shell!.write(Uint8List.fromList(utf8.encode('pkill -f car_back.py\n')));
+    _shell!.write(Uint8List.fromList(utf8.encode('pkill -f car_left.py\n')));
+    _shell!.write(Uint8List.fromList(utf8.encode('pkill -f car_right.py\n')));
+  }
+
+  /// Initialize the script for turning on the camera module & setting up the
+  /// camera feed from the host.
+  Future<void> runCamScript() async {
     await _client!.run('pkill -f cam.py');
-    await _client!.run('python cam.py');
+    unawaited(_client!.run('python cam.py'));
   }
 
-  Future<void> closeCamService() async {
+  /// Kill the camera script & shut down the camera module completely.
+  Future<void> killCamScript() async {
     await _client!.run('pkill -f cam.py');
   }
 }

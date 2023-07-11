@@ -30,3 +30,11 @@ class SshKeyReleaseEvent extends SshEvent {
 
   SshKeyReleaseEvent({required this.key});
 }
+
+class SshRunCommandEvent extends SshEvent {
+  final String command;
+
+  SshRunCommandEvent({required this.command});
+}
+
+class SshKillProcessEvent extends SshEvent {}

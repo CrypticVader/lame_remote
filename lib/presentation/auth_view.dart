@@ -47,7 +47,7 @@ class _AuthViewState extends State<AuthView> {
       listener: (context, state) async {
         if (state is SshConnectedState) {
           // Navigate to RoverView
-          Navigator.of(context).push(
+          await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => BlocProvider<SshBloc>.value(
                 value: context.read<SshBloc>(),

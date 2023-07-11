@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_mjpeg/flutter_mjpeg.dart';
 import 'package:lame_remote/application/ssh_bloc/ssh_bloc.dart';
+import 'package:lame_remote/infrastructure/rover_http_service.dart';
 import 'package:lame_remote/infrastructure/rover_ssh_service.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -14,12 +14,12 @@ class RoverView extends StatefulWidget {
 }
 
 class _RoverViewState extends State<RoverView> {
-  final String _assetPath = 'assets/images/imgTest_1.jpg';
-
   late WebViewController controller;
+  late TextEditingController runCommandController;
 
   @override
   void initState() {
+    runCommandController = TextEditingController();
     // set initial orientation to landscape
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -50,6 +50,12 @@ class _RoverViewState extends State<RoverView> {
         ),
       )
       ..loadRequest(Uri.parse('http://192.168.8.106:8000/stream.mjpg'));
+  }
+
+  @override
+  void dispose() {
+    runCommandController.dispose();
+    super.dispose();
   }
 
   @override
@@ -116,16 +122,24 @@ class _RoverViewState extends State<RoverView> {
           child: Scaffold(
             body: Stack(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: LimitedBox(
-                    maxHeight: 640,
-                    maxWidth: 480,
-                    child: WebViewWidget(
-                      controller: controller,
+                // Video stream
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(32),
+                    // child: WebViewWidget(
+                    //   controller: controller,
+                    // ),
+                    child: StreamBuilder<Uint8List>(
+                      stream: RoverHTTPService().getVideoStream(),
+                      builder: (context, snapshot) {
+                        return Image.memory(snapshot.data!);
+                      },
                     ),
                   ),
                 ),
+
+                // Buttons
                 Opacity(
                   opacity: 0.65,
                   child: Padding(
@@ -236,6 +250,110 @@ class _RoverViewState extends State<RoverView> {
                               icon: const Icon(
                                 Icons.arrow_right_rounded,
                               ),
+                            ),
+                          ),
+                        ),
+
+                        // Run command button
+                        Positioned(
+                          left: 32,
+                          top: 32,
+                          child: IconButton.filledTonal(
+                            onPressed: () async {
+                              final shouldRun = await showDialog<bool>(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Run Command'),
+                                    content: TextField(
+                                      textInputAction: TextInputAction.done,
+                                      keyboardType: TextInputType.text,
+                                      controller: runCommandController,
+                                      decoration: InputDecoration(
+                                        contentPadding: EdgeInsets.zero,
+                                        prefixIcon:
+                                            const Icon(Icons.location_on),
+                                        hintText:
+                                            'Enter command to run on host',
+                                        filled: true,
+                                        fillColor: Theme.of(context)
+                                            .colorScheme
+                                            .onSecondary,
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            width: 1,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .secondaryContainer,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        disabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            width: 1,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .secondaryContainer
+                                                .withAlpha(100),
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            width: 3,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withAlpha(150),
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                    actions: [
+                                      OutlinedButton.icon(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        label: const Text('Cancel'),
+                                        icon: const Icon(Icons.cancel),
+                                      ),
+                                      FilledButton.icon(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(true);
+                                        },
+                                        icon: const Icon(Icons.send_sharp),
+                                        label: const Text('Run'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (shouldRun != null && shouldRun) {
+                                context.read<SshBloc>().add(SshRunCommandEvent(
+                                    command: runCommandController.text));
+                                runCommandController.text = '';
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.start_sharp,
+                            ),
+                          ),
+                        ),
+
+                        // Kill process button
+                        Positioned(
+                          left: 32,
+                          top: 72,
+                          child: IconButton.filledTonal(
+                            onPressed: () => context
+                                .read<SshBloc>()
+                                .add(SshKillProcessEvent()),
+                            icon: const Icon(
+                              Icons.stop,
                             ),
                           ),
                         ),
